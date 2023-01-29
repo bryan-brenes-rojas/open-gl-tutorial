@@ -1,8 +1,8 @@
-app: Application.o
-	g++ src/Application.o -o app -lglfw -lGL
+app: main.o
+	g++ src/main.o -o main -lglfw -lGL -lGLEW -lX11 -lGLU
 
-Application.o: src/Application.cpp
-	g++ -c src/Application.cpp -o src/Application.o
+main.o: src/main.cpp
+	g++ -c src/main.cpp -o src/main.o
 
 clean:
-	rm **/*.o app
+	rm **/*.o main
