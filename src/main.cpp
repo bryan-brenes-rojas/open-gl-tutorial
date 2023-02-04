@@ -1,20 +1,28 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <cstdlib>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-const GLint WIDTH = 800, HEIGHT = 600;
+const GLint WIDTH = 800, HEIGHT = 800;
 
 // This correspond to IDs of "objects" in the graphic memory
-GLuint VAO, VBO, shader;
+unsigned int VAO, VBO, shader, uniformXMove;
+
+bool direction = true;
+float triOffset = 0.0f;
+float triMaxOffset = 0.7f;
+float triIncrement = 0.0035f;
 
 // Vertex shader
-static const char *vShader = "            \
-#version 330                              \n\
-layout (location = 0) in vec3 pos;        \n\
-void main(){                              \n\
-  gl_Position = vec4(0.5 * pos, 1.0);     \n\
-}                                         \n\
+static const char *vShader = "                             \
+#version 330                                               \n\
+layout (location = 0) in vec3 pos;                         \n\
+uniform float xMove;                                       \n\
+void main(){                                               \n\
+  gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, 0.4 * pos.y, 1.0);    \n\
+}                                                          \n\
 ";
 
 // Fragment shader
@@ -27,8 +35,7 @@ void main(){                          \n\
 ";
 
 void createTriangle() {
-  GLfloat vertices[] = {-1.0f, -1.0f, 0.0f, 1.0f, -1.0f,
-                        -0.0f, 0.0f,  1.0f, 0.0f};
+  float vertices[] = {-1.0f, -1.0f, 0.0f, 1.0f, -1.0f, -0.0f, 0.0f, 1.0f, 0.0f};
 
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
@@ -47,18 +54,18 @@ void createTriangle() {
 }
 
 void addShader(GLuint program, const char *shaderCode, GLenum shaderType) {
-  GLuint shader = glCreateShader(shaderType);
-  const GLchar *code[1];
+  unsigned int shader = glCreateShader(shaderType);
+  const char *code[1];
   code[0] = shaderCode;
 
-  GLint codeLength[1];
+  int codeLength[1];
   codeLength[0] = strlen(shaderCode);
 
   glShaderSource(shader, 1, code, codeLength);
   glCompileShader(shader);
 
-  GLint result = 0;
-  GLchar eLog[1024] = {0};
+  int result = 0;
+  char eLog[1024] = {0};
 
   glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
   if (!result) {
@@ -97,6 +104,8 @@ void compileShaders() {
     printf("Error validating shader program: '%s'\n", eLog);
     return;
   }
+
+  uniformXMove = glGetUniformLocation(shader, "xMove");
 }
 
 int main(void) {
@@ -155,11 +164,23 @@ int main(void) {
     // Poll for and process events
     glfwPollEvents();
 
+    if (direction) {
+      triOffset += triIncrement;
+    } else {
+      triOffset -= triIncrement;
+    }
+
+    if(abs(triOffset) >= triMaxOffset) {
+      direction = !direction;
+    };
+
     // Render here
     glClearColor(0.0f, 0.0f, 0.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shader);
+    glUniform1f(uniformXMove, triOffset);
+
     glBindVertexArray(VAO);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
