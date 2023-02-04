@@ -5,6 +5,7 @@
 ```bash
 sudo dnf install glfw glfw-devel
 sudo dnf install glew libGLEW glew-devel
+sudo dnf install glm-devel glm-doc
 ```
 
 To be able to link the libraries when compiling options must be passed to the
