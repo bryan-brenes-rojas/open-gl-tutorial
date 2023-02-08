@@ -13,6 +13,7 @@
 
 const GLint WIDTH = 800, HEIGHT = 800;
 const float PI = 3.1415926f;
+const float toRadians = PI / 180.0f;
 
 // This correspond to IDs of "objects" in the graphic memory
 unsigned int VAO, VBO, shader, uniformModel;
@@ -190,7 +191,6 @@ int main(void) {
     glm::mat4 model(1.0f);
     model = glm::rotate(model, PI / 4, glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.4f, 0.3f, 0.4f));
 
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
