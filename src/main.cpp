@@ -23,6 +23,8 @@ float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.0035f;
 
+float curAngle = 0.0f;
+
 // Vertex shader
 static const char *vShader = "                             \
 #version 330                                               \n\
@@ -182,6 +184,11 @@ int main(void) {
       direction = !direction;
     };
 
+    curAngle += 0.11f;
+    if (curAngle >= 360) {
+      curAngle -= 360;
+    }
+
     // Render here
     glClearColor(0.0f, 0.0f, 0.0, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -189,8 +196,9 @@ int main(void) {
     glUseProgram(shader);
 
     glm::mat4 model(1.0f);
-    model = glm::rotate(model, PI / 4, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
     model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+    model = glm::rotate(model, curAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
