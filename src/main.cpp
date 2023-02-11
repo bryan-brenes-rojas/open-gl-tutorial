@@ -16,7 +16,7 @@ const float PI = 3.1415926f;
 const float toRadians = PI / 180.0f;
 
 // This correspond to IDs of "objects" in the graphic memory
-unsigned int VAO, VBO, shader, uniformModel;
+unsigned int VAO, VBO, IBO, shader, uniformModel;
 
 bool direction = true;
 float triOffset = 0.0f;
@@ -29,26 +29,38 @@ float curAngle = 0.0f;
 static const char *vShader = "                             \
 #version 330                                               \n\
 layout (location = 0) in vec3 pos;                         \n\
+out vec4 vCol;                                             \n\
 uniform mat4 model;                                        \n\
 void main(){                                               \n\
   gl_Position = model * vec4(pos, 1.0);                    \n\
+  vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);               \n\
 }                                                          \n\
 ";
 
 // Fragment shader
 static const char *fShader = "        \
 #version 330                          \n\
+in vec4 vCol;                         \n\
 out vec4 colour;                      \n\
 void main(){                          \n\
-  colour = vec4(1.0, 0.0, 0.0, 1.0);  \n\
+  colour = vCol;                      \n\
 }                                     \n\
 ";
 
 void createTriangle() {
-  float vertices[] = {-1.0f, -1.0f, 0.0f, 1.0f, -1.0f, -0.0f, 0.0f, 1.0f, 0.0f};
+  // Indices from the vertices array
+  unsigned int indices[] = {0, 3, 1, 1, 3, 2, 2, 3, 0, 0, 1, 2};
+
+  float vertices[] = {-1.0f, -1.0f, 0.0f,  0.0f, -1.0f, 1.0f,
+                      1.0f,  -1.0f, -0.0f, 0.0f, 1.0f,  0.0f};
 
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
+
+  glGenBuffers(1, &IBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
 
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -61,6 +73,7 @@ void createTriangle() {
   // unbind the buffer and vertex array
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void addShader(GLuint program, const char *shaderCode, GLenum shaderType) {
@@ -163,6 +176,8 @@ int main(void) {
     return -1;
   }
 
+  glEnable(GL_DEPTH_TEST);
+
   // Setup viewport size
   glViewport(0, 0, bufferWidth, bufferWidth);
 
@@ -191,22 +206,26 @@ int main(void) {
 
     // Render here
     glClearColor(0.0f, 0.0f, 0.0, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(shader);
 
     glm::mat4 model(1.0f);
     model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-    model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-    model = glm::rotate(model, curAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+    // model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+    model =
+        glm::rotate(model, curAngle * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
     glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glUseProgram(0);
 
     // Swap front and back buffers
